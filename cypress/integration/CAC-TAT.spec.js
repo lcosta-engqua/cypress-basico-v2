@@ -4,11 +4,11 @@ beforeEach(() => {
 	cy.visit('./src/index.html')
 })
 
-describe('Central de Atendimento ao Cliente TAT', function () {
-	it('verifica o título da aplicação', function () {
+describe('Central de Atendimento ao Cliente TAT', () => {
+	it('verifica o título da aplicação', () => {
 		cy.title().should('include', 'Central de Atendimento ao Cliente TAT')
 	})
-	it('preenche os campos obrigatórios e envia o formulário', function () {
+	it('preenche os campos obrigatórios e envia o formulário', () => {
 		cy.get('#firstName').type('Fulano')
 		cy.get('#lastName').type('de Tal')
 		cy.get('#email').type('teste@teste.com')
@@ -16,7 +16,7 @@ describe('Central de Atendimento ao Cliente TAT', function () {
 		cy.get('.button').click()
 		cy.get('.success').should('contain', 'Mensagem enviada com sucesso.')
 	})
-	it('exibe mensagem de erro ao submeter o formulário com um email com formatação inválida', function () {
+	it('exibe mensagem de erro ao submeter o formulário com um email com formatação inválida', () => {
 		cy.get('#firstName').type('Fulano')
 		cy.get('#lastName').type('de Tal')
 		cy.get('#email').type('teste.com')
@@ -118,11 +118,82 @@ describe('Central de Atendimento ao Cliente TAT', function () {
 	it('verifica que a política de privacidade abre em outra aba sem a necessidade de um clique', () => {
 		cy.get('#privacy a').should('have.attr', 'target', '_blank')
 	})
-	it('', () => {
+	it('removendo target atributo', () => {
 		cy.get('#privacy a')
 			.invoke('removeAttr', 'target')
 			.click()
 
 		cy.contains('Talking About Testing').should('be.visible')
 	})
+})
+
+describe('Central de Atendimento ao Cliente TAT - Avançado', () => {
+	const THREE_SECONDS_IN_MS = 3000
+
+	it('exibe mensagem por 3 segundos', () => {
+		cy.clock() // congela o relógio do navegador
+	  
+		// (...) // ação que dispara algo que exibe uma mensagem por três segundos
+		cy.get('#firstName').type('Fulano')
+		cy.get('#lastName').type('de Tal')
+		cy.get('#email').type('teste@teste.com')
+		cy.get('#open-text-area').type('Lorem Ipsum é simplesmente uma simulação de texto da indústria tipográfica e de impressos, e vem sendo utilizado desde o século XVI.', { delay: 0 })
+		cy.get('.button').click()
+		
+		// (...) // verificação de que a mensagem está visível
+		cy.get('.success').should('contain', 'Mensagem enviada com sucesso.')
+	  
+		cy.tick(THREE_SECONDS_IN_MS) // avança o relógio três segundos (em milissegundos). Avanço este tempo para não perdê-lo esperando.
+	  
+		// (...) // verificação de que a mensagem não está mais visível
+		cy.get('.success').should('not.be.visible')
+	})
+
+	it('exibe e esconde as mensagens de sucesso e erro usando o .invoke', () => {
+		cy.get('.success')
+			.should('not.be.visible')
+			.invoke('show')
+			.should('be.visible')
+			.and('contain', 'Mensagem enviada com sucesso.')
+			.invoke('hide')
+			.should('not.be.visible')
+		cy.get('.error')
+			.should('not.be.visible')
+			.invoke('show')
+			.should('be.visible')
+			.and('contain', 'Valide os campos obrigatórios!')
+			.invoke('hide')
+			.should('not.be.visible')
+	})
+	it('preenche a area de texto usando o comando invoke', () => {
+		const longText = Cypress._.repeat('0123456789', 20)
+		cy.get('#open-text-area')
+			.invoke('val', longText)
+			.should('have.value', longText)
+	})
+	it('faz uma requisição HTTP', () => {
+		cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+			.should((response) => {
+				const { status, statusText, body } = response
+				expect(status).to.eq(200)
+				expect(statusText).to.eq('OK')
+				expect(body).to.include('CAC TAT')
+			})
+	})
+	it('desafio encontre o gato via requisição HTTP', () => {
+		cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+			.should((response) => {
+				expect(response.body).to.include('🐈')
+			})
+	})
+	it.only('encontre o gato escondido - resolução professor', () => {
+		cy.get('#cat')
+			.invoke('show')
+			.should('be.visible')
+		cy.get('#title')
+			.invoke('text', 'CAT TAT')
+		cy.get('#subtitle')
+			.invoke('text', 'Eu ❤️ gatos')
+	})
+	
 })
